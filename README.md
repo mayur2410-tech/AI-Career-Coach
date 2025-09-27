@@ -71,14 +71,66 @@ The AI Career Coach Platform is a one-stop solution that leverages AI + Smart Au
 ## 📊 System Architecture
 
 ```mermaid
-flowchart TD
-    A[Student Uploads Resume] --> B[AI Resume Builder / Analyzer]
-    B --> C[Skill Gap Analysis]
-    C --> D[Career Roadmap Generator]
-    B --> E[Cover Letter Generator]
-    HR[HR Email Inbox] -->|via n8n| F[Resume Parser + Analysis]
-    F --> G[Excel/CSV Report + Ratings]
-    G --> H[Email Feedback to Candidate]
+flowchart LR
+
+  %% Groups
+  subgraph ClientSystem [Client System]
+    NextJSFrontend[NextJS Frontend]
+    TailwindCSS[Tailwind CSS]
+  end
+
+  subgraph WebApplication [Web Application]
+    AIResumeBuilder[AI Resume Builder]
+    AIResumeAnalyzer[AI Resume Analyzer]
+    CareerRoadmapGenerator[Career Roadmap Generator]
+    AICoverLetterGenerator[AI Cover Letter Generator]
+  end
+
+  subgraph Server [Server]
+    NextJSAPI[NextJS API Routes]
+    InngestJobs[Inngest Background Jobs]
+    NeonPostgres[Neon Postgres]
+  end
+
+  subgraph Automation [n8n Automation]
+    ResumeParser[Resume Parser]
+    ExcelReport[Excel Report]
+    EmailFeedback[Email Feedback]
+  end
+
+  subgraph Roles [Roles]
+    direction TB
+   
+    Student[Student]
+   
+    HR[HR]
+    
+  end
+
+  %% Standalone services
+  Auth[Clerk Authentication]
+  AI[Gemini and OpenAI API]
+
+  %% High-level connections
+  NextJSFrontend -->|requests and responses| NextJSAPI
+  NextJSFrontend -->|sign in| Auth
+
+  %% Feature layer -> API
+  AIResumeBuilder --> NextJSAPI
+  AIResumeAnalyzer --> NextJSAPI
+  CareerRoadmapGenerator --> NextJSAPI
+  AICoverLetterGenerator --> NextJSAPI
+
+  %% Server integrations
+  NextJSAPI -->|job triggers| InngestJobs
+  NextJSAPI --> NeonPostgres
+  NextJSAPI -->|AI calls| AI
+  InngestJobs -->|AI calls| AI
+
+  %% Automation workflow
+  InngestJobs -->|trigger HR workflow| ResumeParser
+  ResumeParser --> ExcelReport
+  ExcelReport --> EmailFeedback
 ```
 
 ---

@@ -1,0 +1,1 @@
+ALTER TABLE "resume_analysis" ADD COLUMN "resumeURL" varchar(255);

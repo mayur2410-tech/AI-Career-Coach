@@ -122,6 +122,8 @@ export const  AiResumeAgent = inngest.createFunction(
             userId: userId,
             email: userEmail,
             analysisData: parseJSON,
+            resumeURL: uploadImageUrl
+
            })
 
           //  console.log("result:",result)

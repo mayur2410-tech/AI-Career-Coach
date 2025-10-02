@@ -8,6 +8,13 @@
       "when": 1759315107272,
       "tag": "0000_complete_dakota_north",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1759412382506,
+      "tag": "0001_common_energizer",
+      "breakpoints": true
     }
   ]
 }

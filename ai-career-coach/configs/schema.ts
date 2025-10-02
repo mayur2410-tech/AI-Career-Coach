@@ -15,7 +15,8 @@ export const resumeAnalysisTable = pgTable("resume_analysis", {
 
     email: varchar({ length: 255 }).notNull(),
 
-    analysisData: json(), // store Gemini response here
+    analysisData: json(),
+    resumeURL: varchar({ length: 255 }),
 
     createdAt: timestamp("created_at", { withTimezone: true })
         .defaultNow()

@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button'
 import { useState } from 'react'
 import Link from 'next/link'
 import ResumeUploadDailog from './ResumeUploadDailog'
+import RoadMapGeneratorAgent from '../../ai-tools/ai-roadmap-agent/page'
+import RoadMapGeneratorDialog from './RoadMapGeneratorDialog'
 interface AiToolCardProps {
   tool: {
     name: string;
@@ -19,9 +21,14 @@ interface AiToolCardProps {
 const AiToolCard = ({ tool ,key}: AiToolCardProps ) => {
 
   const[openResumeUpload, setOpenResumeUpload] = useState(false)
+  const[openRoadMapDailog, setOpenRoadMapDailog] = useState(false)
 const onClickButton = () => {
  if(tool.name == "AI Resume Analyzer"){
   setOpenResumeUpload(true)
+  return
+ }
+ if(tool.path === "/ai-tools/ai-roadmap-agent"){
+  setOpenRoadMapDailog(true)
   return
  }
 }
@@ -41,6 +48,7 @@ const onClickButton = () => {
         >{tool.button}</Button>
 
         <ResumeUploadDailog openResumeUpload={openResumeUpload} setOpenResumeDailog={setOpenResumeUpload}/>
+        <RoadMapGeneratorDialog  openDialog={openRoadMapDailog} setOpenDialog={setOpenRoadMapDailog}/>
       {/* </Link> */}
     </div>
   )

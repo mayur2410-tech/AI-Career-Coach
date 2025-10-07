@@ -17,14 +17,14 @@ const AiTools = () => {
             des: "Improve your resume ",
             icon: "/resume.png",
             button: "Analyze Now",
-            path:'/ai-resume-analyzer'
+            path:'/ai-tools/ai-resume-analyzer'
         },
         {
             name: "Career Roadmap Generator",
             des: "Build your roadmap",
             icon:'/roadmap.png',
             button: 'Generate Now',
-            path:'/career-roadmap-generator'
+            path:'/ai-tools/ai-roadmap-agent'
         },
         {
             name: "Cover Letter Generator",

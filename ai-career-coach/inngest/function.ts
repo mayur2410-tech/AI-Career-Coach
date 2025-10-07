@@ -2,7 +2,7 @@ import { db } from "@/configs/db";
 import { inngest } from "./client";
 import { createAgent, anthropic, gemini } from '@inngest/agent-kit';
 import ImageKit from "imagekit";
-import { resumeAnalysisTable } from "@/configs/schema";
+import { resumeAnalysisTable, roadMapGeneratorTable } from "@/configs/schema";
 export const helloWorld = inngest.createFunction(
   { id: "hello-world" },
   { event: "test/hello.world" },
@@ -86,41 +86,37 @@ Edit
 export const AIRoadMapGenerartorAgent = createAgent({
   name:"AIRoadMapGenerartorAgent",
   description:'Generate details tree like flow raodmap',
-  system:`Generate a React flow tree-structured learning roadmap for user input position/ skills the following format:
-vertical tree structure with meaningful x/y positions to form a flow
-• Structure should be similar to roadmap.sh layout
-• Steps should be ordered from fundamentals to advanced
-• Include branching for different specializations (if applicable)
-• Each node must have a title, short description, and learning resource link
-• Use unique IDs for all nodes and edges
-• make it more specious node position.
-• Response n JSON format
+  system:`Generate a  flow tree-structured learning roadmap for user input position/skills in the following format:
+- Vertical tree structure with meaningful x/y positions to form a flow
+- Structure similar to roadmap.sh layout
+- Steps ordered from fundamentals to advanced
+- Include branching for different specializations (if applicable)
+- Each node must have a title, short description, and learning resource link
+- Use **YouTube video links only** for resources (not websites)
+- Use unique IDs for all nodes and edges
+- Make node positions more spaced out
+- Response in JSON format:
 {
-roadmapTitle:",
-description:<3-5 Lines>,
-duration:"
-initialNodes : [
-{
-id:'1
-type: 'turbo',
-position: { x:0, y:0},
-data: {
-title: 'Step Title',
-description: 'Short two-line explanation of what the step covers:,
-link: 'Helpful link for learning this step',
-},
-},
-...
-],
-
-initialEdges : [
-{
-id: 'e1-2'
-source:'1',
-target: '2',
-},
-...
-];
+  roadmapTitle: "Title of the Roadmap",
+  description: "<3-5 Lines>",
+  duration: "",
+  initialNodes: [
+    {
+      id: '1',
+      type: 'turbo',
+      position: { x:0, y:0 },
+      data: {
+        title: 'Step Title',
+        description: 'Short two-line explanation of what the step covers',
+        link: 'YouTube video link for this step'
+      }
+    },
+    ...
+  ],
+  initialEdges: [
+    { id: 'e1-2', source:'1', target: '2' },
+    ...
+  ]
 }`,
    model:gemini({
     model:'gemini-2.0-flash',
@@ -180,11 +176,32 @@ export const  AiResumeAgent = inngest.createFunction(
 
 export const AIRoadmapAgent = inngest.createFunction(
   {id:"AiRoadMapAgent"},
-  {event:"AiRoadMeapAgent"},
+  {event:"AiRoadMapAgent"},
   async({event,step})=>{
-    const {userInput,userEmail}= await event.data;
-    const roadMapResult = await AIRoadMapGenerartorAgent.run("UserInput",userInput)
-    return roadMapResult
+    const {userInput,userEmail,userId}= await event.data;
+const roadMapResult = await AIRoadMapGenerartorAgent.run(
+  `Generate a roadmap for the following position/skills: ${userInput}. 
+   Use JSON format exactly as specified in the system prompt and YouTube links only.`
+);
+    
+     //@ts-ignore
+      const rawContent = roadMapResult.output[0].content;
+      const rawContentJson  = rawContent.replace('```json', '').replace('```', '')
+      const parseJSON = JSON.parse(rawContentJson)
+        const saveToDB = await step.run("saveToDB", async()=>{
+           const result = await db.insert(roadMapGeneratorTable).values({
+            userId: userId,
+            email: userEmail,
+            roadMapData: parseJSON,
+          
+
+           })
+
+          //  console.log("result:",result)
+           return parseJSON;
+      })
+
+
 
     //save to db
 

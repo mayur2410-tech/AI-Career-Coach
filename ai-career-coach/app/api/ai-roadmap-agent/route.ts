@@ -1,17 +1,28 @@
+import { db } from "@/configs/db";
+import { usersTable } from "@/configs/schema";
 import { inngest } from "@/inngest/client";
 import { currentUser } from "@clerk/nextjs/server";
 import axios from "axios";
 import { NextRequest, NextResponse } from "next/server";
+import { eq } from "drizzle-orm";
 
 export async function POST(req:NextRequest) {
     const {userInput} = await req.json();
     const user = await currentUser();
+      const email= user?.primaryEmailAddress?.emailAddress;
+        if (!email) {
+            return NextResponse.json({ error: "User email not found." }, { status: 400 });
+        }
+        const dbUser = await db.select().from(usersTable).where(eq(usersTable.email, email));
+        const userId = dbUser[0].id;
+    
 
     const resultId = await inngest.send({
             name:"AiRoadMapAgent",
             data:{
                 userInput:userInput,
-                userEmail:user?.primaryEmailAddress?.emailAddress 
+                userEmail:email,
+                userId:userId
             }
     });
     const runId = resultId?.ids[0];

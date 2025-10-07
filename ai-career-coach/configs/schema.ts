@@ -22,3 +22,18 @@ export const resumeAnalysisTable = pgTable("resume_analysis", {
         .defaultNow()
         .notNull(),
 });
+export const roadMapGeneratorTable = pgTable("road_map_generator", {
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+
+    userId: integer()
+        .notNull()
+        .references(() => usersTable.id, { onDelete: "cascade" }),
+
+    email: varchar({ length: 255 }).notNull(),
+
+    roadMapData: json(),
+
+    createdAt: timestamp("created_at", { withTimezone: true })
+        .defaultNow()
+        .notNull(),
+});

@@ -10,7 +10,7 @@ const AiTools = () => {
             des: "Create a professional resume ",
             icon: "/builder.png",
             button: "Build Resume",
-            path:'/#'
+            path:'/ai-tools/ai-resume-builder'
         },
         {
             name: "AI Resume Analyzer",

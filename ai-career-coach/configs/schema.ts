@@ -1,4 +1,5 @@
-import { integer, pgTable, varchar ,json,timestamp} from "drizzle-orm/pg-core";
+
+import { integer, pgTable, varchar ,json,timestamp,text} from "drizzle-orm/pg-core";
 export const usersTable = pgTable("users", {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
     name: varchar({ length: 255 }).notNull(),
@@ -32,6 +33,21 @@ export const roadMapGeneratorTable = pgTable("road_map_generator", {
     email: varchar({ length: 255 }).notNull(),
 
     roadMapData: json(),
+
+    createdAt: timestamp("created_at", { withTimezone: true })
+        .defaultNow()
+        .notNull(),
+});
+export const coverLetterTable = pgTable("coverletter-text", {
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+
+    userId: integer()
+        .notNull()
+        .references(() => usersTable.id, { onDelete: "cascade" }),
+
+    email: varchar({ length: 255 }).notNull(),
+
+    coverLetter_Text: text().notNull(),
 
     createdAt: timestamp("created_at", { withTimezone: true })
         .defaultNow()

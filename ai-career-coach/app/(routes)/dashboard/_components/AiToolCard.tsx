@@ -31,6 +31,7 @@ const onClickButton = () => {
   setOpenRoadMapDailog(true)
   return
  }
+
 }
 
   return (
@@ -42,14 +43,14 @@ const onClickButton = () => {
       height={key === 0 ? 120 : 50}
     />      <h2 className='font-bold mt-2'>{tool.name}</h2>
       <p className='text-gray-400'>{tool.des}</p>
-      {/* <Link href={tool.path}> */}
+      <Link href={tool.path}>
         <Button className='mt-3 w-full'
         onClick={onClickButton}
         >{tool.button}</Button>
 
         <ResumeUploadDailog openResumeUpload={openResumeUpload} setOpenResumeDailog={setOpenResumeUpload}/>
         <RoadMapGeneratorDialog  openDialog={openRoadMapDailog} setOpenDialog={setOpenRoadMapDailog}/>
-      {/* </Link> */}
+      </Link>
     </div>
   )
 }

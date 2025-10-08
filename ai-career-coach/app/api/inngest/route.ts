@@ -1,6 +1,6 @@
 import { serve } from "inngest/next";
 import { inngest } from "../../../inngest/client";
-import { helloWorld } from "../../../inngest/function";
+import { AICoverLetterAgent, helloWorld } from "../../../inngest/function";
 import { AiResumeAgent } from "../../../inngest/function";
 import {AIRoadmapAgent} from "../../../inngest/function";
 
@@ -10,7 +10,8 @@ export const { GET, POST,PUT} = serve({
   functions: [
    helloWorld,
    AiResumeAgent,
-   AIRoadmapAgent
+   AIRoadmapAgent,
+   AICoverLetterAgent
 
   ],
 });

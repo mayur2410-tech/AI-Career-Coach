@@ -21,11 +21,7 @@ const items = [
         url: "/dashboard",
         icon: Layers,
     },
-    {
-        title: "AI Tools",
-        url: "#",
-        icon: Inbox,
-    },
+
     {
         title: "My History",
         url: "/history",

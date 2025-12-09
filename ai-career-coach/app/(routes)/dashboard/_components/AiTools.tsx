@@ -5,13 +5,7 @@ import AiToolCard from './AiToolCard'
 const AiTools = () => {
 
     const AiToolsList =[
-        {
-            name: " AI Resume Builder",
-            des: "Create a professional resume ",
-            icon: "/builder.png",
-            button: "Build Resume",
-            path:'/ai-tools/ai-resume-builder'
-        },
+     
         {
             name: "AI Resume Analyzer",
             des: "Improve your resume ",
@@ -31,7 +25,14 @@ const AiTools = () => {
             des: "Write a cover letter",
             icon: "/cover.png",
             button: " Create Now",
-            path:'/cover-letter-generator'
+            path:'/ai-tools/ai-coverletter-agent'
+        },
+           {
+            name: " AI Resume Builder",
+            des: "Create a professional resume ",
+            icon: "/builder.png",
+            button: "Build Resume",
+            path:'/ai-tools/ai-resume-builder'
         },
     ]
   return (

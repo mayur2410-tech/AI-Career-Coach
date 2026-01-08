@@ -7,6 +7,13 @@ const AiTools = () => {
     const AiToolsList =[
      
         {
+            name: "AI Mock Interview",
+            des: "Improve your Communication Skill ",
+            icon: "/resume.png",
+            button: "Mock Interview",
+            path:'/ai-tools/ai-mock-interview'
+        },
+        {
             name: "AI Resume Analyzer",
             des: "Improve your resume ",
             icon: "/resume.png",

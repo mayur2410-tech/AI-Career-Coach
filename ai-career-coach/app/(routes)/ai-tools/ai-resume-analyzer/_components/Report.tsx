@@ -65,6 +65,7 @@ const KEYWORDS = [
   "API",
   "Git",
   "GitHub",
+  "LinkedIn",
   "HTML",
   "CSS",
   "JavaScript",
@@ -211,7 +212,7 @@ const downloadPDF = async () => {
             <p className="mt-1 text-gray-600 text-sm">{section.comment}</p>
 
             {/* Optional: show tips, whats_good, needs_improvement per section */}
-            {section.whats_good.length > 0 && (
+            {section.whats_good?.length > 0 && (
               <div className="mt-2">
                 <h4 className="font-medium text-gray-700">What's Good:</h4>
                 <ul className="list-disc list-inside text-gray-600 text-sm">
@@ -222,7 +223,7 @@ const downloadPDF = async () => {
               </div>
             )}
 
-           {section.tips_for_improvement.length > 0 && (
+           {section.tips_for_improvement?.length > 0 && (
   <div className="mt-2">
     <h4 className="font-medium text-gray-700">Tips for Improvement:</h4>
     <ul className="list-disc list-inside text-gray-600 text-sm">

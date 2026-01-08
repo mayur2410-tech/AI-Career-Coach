@@ -9,7 +9,7 @@ import ProjectsForm from "./_components/ProjectsForm";
 import SkillsCertificationsForm from "./_components/SkillsForm";
 import PreviewResume from "./_components/PreviewResume";
 
-export default function ResumeBuilderPage() {
+export default function Page() {
   // State for all sections
   const [personalInfo, setPersonalInfo] = useState({
     name: "",
@@ -37,50 +37,57 @@ export default function ResumeBuilderPage() {
   const [includeWorkExperience, setIncludeWorkExperience] = useState<boolean>(true);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
-      {/* Left side - Forms */}
-      <div className="space-y-6">
-        <PersonalInfoForm data={personalInfo} setData={setPersonalInfo} />
-        <CareerObjectiveForm data={careerObjective} setData={setCareerObjective} />
-        <EducationForm data={education} setData={setEducation} />
-        {/* Work Experience Toggle */}
-        <div className="bg-white p-4 rounded shadow flex items-center justify-between">
-          <h3 className="font-semibold">Include Work Experience</h3>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={includeWorkExperience}
-              onChange={(e) => setIncludeWorkExperience(e.target.checked)}
-            />
-            {includeWorkExperience ? "Shown in preview" : "Hidden from preview"}
-          </label>
+    <div className="mx-auto max-w-7xl px-4 py-6">
+      {/* Preview gets 2/3 width on lg+ */}
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Left: form (1/3) */}
+        <div className="w-full lg:w-[420px] xl:w-[460px] 2xl:w-[500px] space-y-6 flex-shrink-0">
+          <PersonalInfoForm data={personalInfo} setData={setPersonalInfo} />
+          <CareerObjectiveForm data={careerObjective} setData={setCareerObjective} />
+          <EducationForm data={education} setData={setEducation} />
+          {/* Work Experience Toggle */}
+          <div className="bg-white p-4 rounded shadow flex items-center justify-between">
+            <h3 className="font-semibold">Include Work Experience</h3>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={includeWorkExperience}
+                onChange={(e) => setIncludeWorkExperience(e.target.checked)}
+              />
+              {includeWorkExperience ? "Shown in preview" : "Hidden from preview"}
+            </label>
+          </div>
+          {includeWorkExperience && (
+            <WorkExperienceForm data={workExperience} setData={setWorkExperience} />
+          )}
+          <ProjectsForm data={projects} setData={setProjects} />
+          <SkillsCertificationsForm
+            skills={skills}
+            setSkills={setSkills}
+            certifications={certifications}
+            setCertifications={setCertifications}
+            achievements={achievements}
+            setAchievements={setAchievements}
+          />
         </div>
-        {includeWorkExperience && (
-          <WorkExperienceForm data={workExperience} setData={setWorkExperience} />
-        )}
-        <ProjectsForm data={projects} setData={setProjects} />
-        <SkillsCertificationsForm
-          skills={skills}
-          setSkills={setSkills}
-          certifications={certifications}
-          setCertifications={setCertifications}
-          achievements={achievements}
-          setAchievements={setAchievements}
-        />
-      </div>
 
-      {/* Right side - Live Preview */}
-      <PreviewResume
-        personalInfo={personalInfo}
-        careerObjective={careerObjective}
-        education={education}
-        workExperience={workExperience}
-        projects={projects}
-        skills={skills}
-        certifications={certifications}
-        achievements={achievements}
-        includeWorkExperience={includeWorkExperience}
-      />
+        {/* Right: sticky preview (2/3) */}
+        <aside className="hidden lg:block flex-1 p-1">
+          <div className="sticky top-4 h-[calc(100vh-2rem)] overflow-auto rounded-md border bg-white shadow-sm p-4">
+            <PreviewResume
+              personalInfo={personalInfo}
+              careerObjective={careerObjective}
+              education={education}
+              workExperience={workExperience}
+              projects={projects}
+              skills={skills}
+              certifications={certifications}
+              achievements={achievements}
+              includeWorkExperience={includeWorkExperience}
+            />
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }

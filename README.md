@@ -511,14 +511,23 @@ npx prisma generate
 npx prisma db seed
 ```
 
-#### 5️⃣ **Start Development Server**
+#### 5️⃣ **Start Development Server and  Background Services**
 ```bash
 npm run dev
+```
+```bash
+# Terminal 1: Start Inngest Dev Server
+npx inngest-cli@latest dev
+
+# Terminal 2: (Optional) Open Drizzle Studio
+npx drizzle-kit studio
 ```
 
 #### 6️⃣ **Open Your Browser**
 ```
 🌐 http://localhost:3000
+🔧 Inngest:  http://localhost:8288
+🗄️ Drizzle Studio: http://localhost:4983
 ```
 
 ---

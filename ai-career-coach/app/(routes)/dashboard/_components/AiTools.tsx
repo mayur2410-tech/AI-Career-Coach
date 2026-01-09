@@ -9,7 +9,7 @@ const AiTools = () => {
         {
             name: "AI Mock Interview",
             des: "Improve your Communication Skill ",
-            icon: "/resume.png",
+            icon: "/robot.png",
             button: "Mock Interview",
             path:'/ai-tools/ai-mock-interview'
         },

@@ -4,7 +4,8 @@ const isPublicRoute = createRouteMatcher([
     '/sign-in(.*)',
     '/sign-up(.*)',
     '/',
-    '/api/inngest'
+    '/api/inngest',
+    '/api/mock-interview(.*)', // Allow access to mock interview APIs (including seed)
 ])
 
 export default clerkMiddleware(async (auth, req) => {

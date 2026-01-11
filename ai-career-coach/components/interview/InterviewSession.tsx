@@ -22,6 +22,7 @@ export default function InterviewSession({ jobRole, resumeText, onEnd }: Intervi
     const [volume, setVolume] = useState({ user: 0, assistant: 0 });
     const [duration, setDuration] = useState(0);
     const [warnings, setWarnings] = useState(0);
+    const [ragContext, setRagContext] = useState<string | null>(null);
 
     // Keep transcript in ref for final submission without closure staleness
     const transcriptRef = useRef<any[]>([]);
@@ -100,6 +101,7 @@ export default function InterviewSession({ jobRole, resumeText, onEnd }: Intervi
                     }
 
                     if (message.role === 'user') {
+                        // 1. Validate Message (Security)
                         try {
                             const { data } = await axios.post('/api/mock-interview/validate-message', {
                                 message: message.transcript
@@ -127,6 +129,31 @@ export default function InterviewSession({ jobRole, resumeText, onEnd }: Intervi
                             }
                         } catch (err) {
                             console.error("Validation check error", err);
+                        }
+
+                        // 2. Fetch RAG Context (Knowledge Augmentation)
+                        try {
+                            console.log("Fetching RAG context for:", message.transcript);
+                            const { data } = await axios.post('/api/mock-interview/get-context', {
+                                query: message.transcript
+                            });
+
+                            if (data.documents && data.documents.length > 0) {
+                                const ctx = data.documents[0].content;
+                                console.log("RAG Context found:", ctx);
+                                setRagContext(ctx);
+
+                                // Inject context into Vapi so the AI knows it too
+                                vapiInstance.send({
+                                    type: "add-message",
+                                    message: {
+                                        role: "system",
+                                        content: `Relevant Knowledge Base Info: ${ctx}. Use this to guide your next response if technical.`
+                                    }
+                                });
+                            }
+                        } catch (err) {
+                            console.error("RAG fetch error", err);
                         }
                     }
                 }
@@ -185,8 +212,6 @@ export default function InterviewSession({ jobRole, resumeText, onEnd }: Intervi
                     language: "en-US",
                     endpointing: 300 // Wait 300ms of silence before processing (Deepgram specific)
                 },
-                // Add silence timeout to prevent interruption
-                // Vapi often allows 'silenceTimeoutSeconds' at root or within transcriber
             });
 
         } catch (err) {
@@ -210,7 +235,7 @@ export default function InterviewSession({ jobRole, resumeText, onEnd }: Intervi
     };
 
     return (
-        <div className="flex flex-col h-[600px] max-w-4xl mx-auto gap-4">
+        <div className="flex flex-col h-[700px] max-w-4xl mx-auto gap-4">
             <div className="flex justify-between items-center p-4 bg-white rounded-lg border shadow-sm">
                 <div>
                     <h2 className="text-xl font-bold">Mock Interview: {jobRole}</h2>
@@ -251,6 +276,14 @@ export default function InterviewSession({ jobRole, resumeText, onEnd }: Intervi
                     <p className="text-sm text-gray-500">{isSpeaking === 'user' ? 'Speaking...' : 'Listening...'}</p>
                 </Card>
             </div>
+
+            {/* RAG Context Display (New) */}
+            {ragContext && (
+                <div className="bg-indigo-50 border border-indigo-100 p-3 rounded-lg text-sm text-indigo-800 animate-in fade-in slide-in-from-bottom-2">
+                    <span className="font-bold mr-2">🧠 AI Knowledge Base:</span>
+                    {ragContext}
+                </div>
+            )}
 
             <Card className="h-48 overflow-y-auto p-4 bg-gray-50 border">
                 <h4 className="text-xs font-semibold text-gray-400 mb-2 uppercase">Live Transcript</h4>

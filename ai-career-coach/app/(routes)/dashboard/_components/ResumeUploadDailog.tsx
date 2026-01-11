@@ -18,78 +18,128 @@ import { Button } from '@/components/ui/button'
 import { v4 as uuidv4 } from "uuid";
 
 const id = uuidv4();
- // e.g. "fdda765f-fc57-5604-a269-52a7df8164ec"
+// e.g. "fdda765f-fc57-5604-a269-52a7df8164ec"
 
-const ResumeUploadDailog = ({openResumeUpload,setOpenResumeDailog}:any) => {
-  
-    const[file,setFile]= useState<any>()
-    const[loading,setLoading]=useState(false)
-    const router = useRouter();
-    const onFileChange = (e:any) => {
-        const file = e.target.files?.[0];
-        if(file){
-            console.log("file:",file.name)
-            setFile(file)
-        }
+const ResumeUploadDailog = ({ openResumeUpload, setOpenResumeDailog }: any) => {
+
+  const [file, setFile] = useState<any>()
+  const [loading, setLoading] = useState(false)
+  const [analysisType, setAnalysisType] = useState('overall'); // 'overall' or 'specific'
+  const [jobRole, setJobRole] = useState('');
+  const router = useRouter();
+
+  const onFileChange = (e: any) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      console.log("file:", file.name)
+      setFile(file)
     }
-
- const onUplaodAndAnalyze = async () => {
-  setLoading(true);
-  const recordId = id;
-  const formData = new FormData();
-  formData.append('resumeFile', file);
-  formData.append('recordId', recordId);
-
-  try {
-    const result = await axios.post('/api/ai-resume-agent', formData);
-    console.log("result:", result.data);
-    // You can optionally show a toast or notification here
-    setOpenResumeDailog(false);
-    router.push('/ai-tools/ai-resume-analyzer');
-  } catch (err) {
-    console.error("Upload failed:", err);
-  } finally {
-    // ✅ Always runs
-    setLoading(false);
-   
   }
-};
 
-    const onCancel = () => {
-        setFile(null)
-        // setOpenResumeDailog(false)
+  const onUplaodAndAnalyze = async () => {
+    setLoading(true);
+    const recordId = id;
+    const formData = new FormData();
+    formData.append('resumeFile', file);
+    formData.append('recordId', recordId);
+    formData.append('analysisType', analysisType);
+    if (analysisType === 'specific') {
+      formData.append('jobRole', jobRole);
     }
-  
-    return (
+
+    try {
+      const result = await axios.post('/api/ai-resume-agent', formData);
+      console.log("result:", result.data);
+      // You can optionally show a toast or notification here
+      setOpenResumeDailog(false);
+      router.push('/ai-tools/ai-resume-analyzer');
+    } catch (err) {
+      console.error("Upload failed:", err);
+    } finally {
+      // ✅ Always runs
+      setLoading(false);
+
+    }
+  };
+
+  const onCancel = () => {
+    setFile(null)
+    setAnalysisType('overall')
+    setJobRole('')
+    // setOpenResumeDailog(false)
+  }
+
+  return (
     <Dialog open={openResumeUpload} onOpenChange={setOpenResumeDailog}>
-  {/* <DialogTrigger>Open</DialogTrigger> */}
-  <DialogContent>
-    <DialogHeader>
-      <DialogTitle>Uplaod Resume PDF File</DialogTitle>
-      <DialogDescription>
-        <div>
-            <label htmlFor='resume-upload' className='flex items-center flex-col justify-center p-7 border border-dashed rounded-xl hover:bg-slate-200 cursor-pointer'> 
-                    <File className='h-10 w-10' />
-                    {file?
-                    <h2 className='mt-3 text-blue-600'>{(file as any).name}</h2>
-                    :
-                    <h2 className='mt-3'>Click here to uplaod PDF file</h2>
-                    }
-            </label>
-            <input type="file" id='resume-upload' accept='application/pdf' className='hidden' onChange={onFileChange}/>
-        </div>
-      </DialogDescription>
-    </DialogHeader>
-    <DialogFooter>
-        <Button variant={'outline'} onClick={onCancel}>Cancel</Button>
-        <Button onClick={onUplaodAndAnalyze} disabled={!file || loading}>
-            { loading? <Loader2Icon className='animate-spin' />
-            :<Sparkle /> }
+      {/* <DialogTrigger>Open</DialogTrigger> */}
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Uplaod Resume PDF File</DialogTitle>
+          <DialogDescription>
+            <div className="space-y-4">
+              <label htmlFor='resume-upload' className='flex items-center flex-col justify-center p-7 border border-dashed rounded-xl hover:bg-slate-200 cursor-pointer mt-4'>
+                <File className='h-10 w-10' />
+                {file ?
+                  <h2 className='mt-3 text-blue-600'>{(file as any).name}</h2>
+                  :
+                  <h2 className='mt-3'>Click here to uplaod PDF file</h2>
+                }
+              </label>
+              <input type="file" id='resume-upload' accept='application/pdf' className='hidden' onChange={onFileChange} />
+
+              <div className="space-y-3">
+                <label className="font-medium">Analysis Type:</label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="analysisType"
+                      value="overall"
+                      checked={analysisType === 'overall'}
+                      onChange={(e) => setAnalysisType(e.target.value)}
+                      className="cursor-pointer"
+                    />
+                    Overall Analysis
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="analysisType"
+                      value="specific"
+                      checked={analysisType === 'specific'}
+                      onChange={(e) => setAnalysisType(e.target.value)}
+                      className="cursor-pointer"
+                    />
+                    Specific Role
+                  </label>
+                </div>
+
+                {analysisType === 'specific' && (
+                  <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                    <label className="text-sm text-gray-600 mb-1 block">Target Job Role:</label>
+                    <input
+                      type="text"
+                      value={jobRole}
+                      onChange={(e) => setJobRole(e.target.value)}
+                      placeholder="e.g. Frontend Developer"
+                      className="w-full border rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant={'outline'} onClick={onCancel}>Cancel</Button>
+          <Button onClick={onUplaodAndAnalyze} disabled={!file || loading || (analysisType === 'specific' && !jobRole)}>
+            {loading ? <Loader2Icon className='animate-spin' />
+              : <Sparkle />}
             Upload and Analyze
-            </Button>
-    </DialogFooter>
-  </DialogContent>
-</Dialog>
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 

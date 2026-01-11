@@ -2,7 +2,7 @@ import { db } from "@/configs/db";
 import { inngest } from "./client";
 import { createAgent, anthropic, gemini } from '@inngest/agent-kit';
 import ImageKit from "imagekit";
-import { resumeAnalysisTable, roadMapGeneratorTable,coverLetterTable } from "@/configs/schema";
+import { resumeAnalysisTable, roadMapGeneratorTable, coverLetterTable } from "@/configs/schema";
 export const helloWorld = inngest.createFunction(
   { id: "hello-world" },
   { event: "test/hello.world" },
@@ -16,9 +16,9 @@ export const helloWorld = inngest.createFunction(
 const today = new Date().toDateString();
 
 export const AiResumeAnalyzerAgent = createAgent({
-  name:"AiResumeAnalyzerAgent",
-  description:'AI Resume analzyer agent help to return report',
- system: `
+  name: "AiResumeAnalyzerAgent",
+  description: 'AI Resume analzyer agent help to return report',
+  system: `
 You are an advanced AI Resume Analyzer Agent.
 
 IMPORTANT CONTEXT:
@@ -105,9 +105,9 @@ OUTPUT JSON SCHEMA (EXACT STRUCTURE):
 }
 `,
 
-  model:gemini({
-    model:'gemini-2.5-flash-lite',
-    apiKey:process.env.GEMINI_API_KEY
+  model: gemini({
+    model: 'gemini-2.5-flash-lite',
+    apiKey: process.env.GEMINI_API_KEY
   })
 })
 
@@ -210,80 +210,92 @@ Sincerely,
 
 var imagekit = new ImageKit({
   //@ts-ignore
-    publicKey : process.env.IMAGEKIT_PUBLIC_KEY ,
+  publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
   //@ts-ignore
 
-    privateKey : process.env.IMAGEKIT_PRIVATE_KEY ,
+  privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
   //@ts-ignore
 
-    urlEndpoint : process.env.IMAGEKIT_URL_ENDPOINT 
+  urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT
 });
 
-export const  AiResumeAgent = inngest.createFunction(
-   {id:'AiResumeAgent'},
-   {event:'AiResumeAgent'},
-   async ({event, step})=>{
-    const {recordId, base64ResumeFile, pdfText,userEmail,userId} = await  event.data;
+export const AiResumeAgent = inngest.createFunction(
+  { id: 'AiResumeAgent' },
+  { event: 'AiResumeAgent' },
+  async ({ event, step }) => {
+    const { recordId, base64ResumeFile, pdfText, userEmail, userId, analysisType, jobRole } = await event.data;
 
     //upload file to cloud storage( imagekit.io )
-      const uploadImageUrl = await step.run("uploadImage",async()=>{
-        const imageKitFile = await imagekit.upload({
-            file: base64ResumeFile, //required
-            fileName: `${Date.now()}.pdf`, //required
-            isPublished:true
-        })
-        return imageKitFile.url
+    const uploadImageUrl = await step.run("uploadImage", async () => {
+      const imageKitFile = await imagekit.upload({
+        file: base64ResumeFile, //required
+        fileName: `${Date.now()}.pdf`, //required
+        isPublished: true
       })
-      const aiResumeReport  = await AiResumeAnalyzerAgent.run(pdfText)
-      //@ts-ignore
-      const rawContent = aiResumeReport.output[0].content;
-      const rawContentJson  = rawContent.replace('```json', '').replace('```', '')
-      const parseJSON = JSON.parse(rawContentJson)
-    
-      //save to db 
+      return imageKitFile.url
+    })
 
-      const saveToDB = await step.run("saveToDB", async()=>{
-           const result = await db.insert(resumeAnalysisTable).values({
-            userId: userId,
-            email: userEmail,
-            analysisData: parseJSON,
-            resumeURL: uploadImageUrl
+    // Construct dynamic prompt
+    let prompt = `Analyze this resume content: ${pdfText}`;
+    if (analysisType === 'specific' && jobRole) {
+      prompt += `\n\nIMPORTANT: Perform the analysis specifically for the role of "${jobRole}". 
+        Focus your evaluation, feedback, strengths, and weaknesses specifically on skills and experience relevant to a ${jobRole}.
+        If the candidate lacks skills for ${jobRole}, highlight that in "needs_improvement".
+        The JSON structure must remain EXACTLY the same as the schema provided.`;
+    } else {
+      prompt += `\n\nPerform a general comprehensive analysis of the resume.`;
+    }
 
-           })
+    const aiResumeReport = await AiResumeAnalyzerAgent.run(prompt)
+    //@ts-ignore
+    const rawContent = aiResumeReport.output[0].content;
+    const rawContentJson = rawContent.replace('```json', '').replace('```', '')
+    const parseJSON = JSON.parse(rawContentJson)
 
-          //  console.log("result:",result)
-           return parseJSON;
+    //save to db 
+
+    const saveToDB = await step.run("saveToDB", async () => {
+      const result = await db.insert(resumeAnalysisTable).values({
+        userId: userId,
+        email: userEmail,
+        analysisData: parseJSON,
+        resumeURL: uploadImageUrl
+
       })
 
-   }
+      //  console.log("result:",result)
+      return parseJSON;
+    })
+
+  }
 )
 
 export const AIRoadmapAgent = inngest.createFunction(
-  {id:"AiRoadMapAgent"},
-  {event:"AiRoadMapAgent"},
-  async({event,step})=>{
-    const {userInput,userEmail,userId}= await event.data;
-const roadMapResult = await AIRoadMapGenerartorAgent.run(
-  `Generate a roadmap for the following position/skills: ${userInput}. 
+  { id: "AiRoadMapAgent" },
+  { event: "AiRoadMapAgent" },
+  async ({ event, step }) => {
+    const { userInput, userEmail, userId } = await event.data;
+    const roadMapResult = await AIRoadMapGenerartorAgent.run(
+      `Generate a roadmap for the following position/skills: ${userInput}. 
    Use JSON format exactly as specified in the system prompt and YouTube links only.`
-);
-    
-     //@ts-ignore
-      const rawContent = roadMapResult.output[0].content;
-      const rawContentJson  = rawContent.replace('```json', '').replace('```', '')
-      const parseJSON = JSON.parse(rawContentJson)
-        const saveToDB = await step.run("saveToDB", async()=>{
-           const result = await db.insert(roadMapGeneratorTable).values({
-            userId: userId,
-            email: userEmail,
-            roadMapData: parseJSON,
-          
+    );
 
-           })
+    //@ts-ignore
+    const rawContent = roadMapResult.output[0].content;
+    const rawContentJson = rawContent.replace('```json', '').replace('```', '')
+    const parseJSON = JSON.parse(rawContentJson)
+    const saveToDB = await step.run("saveToDB", async () => {
+      const result = await db.insert(roadMapGeneratorTable).values({
+        userId: userId,
+        email: userEmail,
+        roadMapData: parseJSON,
 
-          //  console.log("result:",result)
-           return parseJSON;
+
       })
+
+      //  console.log("result:",result)
+      return parseJSON;
+    })
 
 
 
@@ -296,7 +308,7 @@ export const AICoverLetterAgent = inngest.createFunction(
   { id: "AICoverLetterAgent" },
   { event: "AICoverLetterAgent" },
   async ({ event, step }) => {
-    const { jobTitle, companyName, jobDescription, resumeRawText ,userEmail,userId} = event.data;
+    const { jobTitle, companyName, jobDescription, resumeRawText, userEmail, userId } = event.data;
 
     const coverLetterResult = await AICoverLetterGeneratorAgent.run(`
       Resume Text: ${resumeRawText}
@@ -310,18 +322,18 @@ export const AICoverLetterAgent = inngest.createFunction(
     const cleanText = rawContent.replace(/```/g, '').replace(/json/g, '').trim();
 
     // Save to DB
-     const saveToDB = await step.run("saveToDB", async()=>{
-           const result = await db.insert(coverLetterTable).values({
-            userId: userId,
-            email: userEmail,
-            coverLetter_Text: cleanText,
-          
+    const saveToDB = await step.run("saveToDB", async () => {
+      const result = await db.insert(coverLetterTable).values({
+        userId: userId,
+        email: userEmail,
+        coverLetter_Text: cleanText,
 
-           })
 
-          //  console.log("result:",result)
-           return cleanText;
       })
+
+      //  console.log("result:",result)
+      return cleanText;
+    })
   }
 );
 

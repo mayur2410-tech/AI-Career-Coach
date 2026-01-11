@@ -56,7 +56,7 @@
 //       {/* Left Side - Form */}
 //       <div className="bg-white p-6 rounded-xl shadow-md space-y-6">
 //         <h1 className="text-2xl font-bold">AI Cover Letter Generator</h1>
-        
+
 //         <div className="space-y-4">
 //           <div>
 //             <label className="block font-medium mb-1">Job Title</label>
@@ -110,7 +110,7 @@
 //       {/* Right Side - Preview */}
 //       <div className="bg-gray-50 p-6 rounded-xl shadow-md h-[80vh] overflow-y-auto space-y-4">
 //         <h2 className="text-2xl font-bold mb-4">Cover Letter Preview</h2>
-        
+
 //         <div className="bg-white p-4 rounded-lg border space-y-4">
 //           <p>Dear Hiring Manager,</p>
 //           <p>
@@ -147,11 +147,11 @@ export default function CoverLetterGenerator() {
 
   const onFileChange = (e) => {
     const file = e.target.files?.[0];
-    if(file) setResumeFile(file);
+    if (file) setResumeFile(file);
   }
 
   const generateCoverLetter = async () => {
-    if(!resumeFile || !jobTitle || !companyName || !jobDescription) return;
+    if (!resumeFile || !jobTitle || !companyName || !jobDescription) return;
     setLoading(true);
 
     const formData = new FormData();
@@ -164,7 +164,7 @@ export default function CoverLetterGenerator() {
       await axios.post('/api/ai-coverletter-agent', formData);
       // After POST, fetch the latest saved cover letter
       fetchLatestCoverLetter();
-    } catch(err) {
+    } catch (err) {
       console.error("Error generating cover letter:", err);
     } finally {
       setLoading(false);
@@ -175,10 +175,10 @@ export default function CoverLetterGenerator() {
   const fetchLatestCoverLetter = async () => {
     try {
       const res = await axios.get('/api/coverletter/latest');
-      if(res.data && res.data.length > 0) {
+      if (res.data && res.data.length > 0) {
         setCoverLetter(res.data[0].coverLetter_Text);
       }
-    } catch(err) {
+    } catch (err) {
       console.error("Error fetching latest cover letter:", err);
     }
   }
@@ -187,6 +187,15 @@ export default function CoverLetterGenerator() {
   useEffect(() => {
     fetchLatestCoverLetter();
   }, []);
+
+  const handleCopy = () => {
+    if (!coverLetter) return;
+    navigator.clipboard.writeText(coverLetter);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 3000);
+  };
+
+  const [isCopied, setIsCopied] = useState(false);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
@@ -221,8 +230,8 @@ export default function CoverLetterGenerator() {
             className="w-full border rounded-md p-2"
             onChange={onFileChange}
           />
-          <Button 
-            onClick={generateCoverLetter} 
+          <Button
+            onClick={generateCoverLetter}
             className="w-full"
             disabled={loading || !resumeFile || !jobTitle || !companyName || !jobDescription}
           >
@@ -234,16 +243,28 @@ export default function CoverLetterGenerator() {
       {/* Right Side - Preview */}
       <div className="bg-gray-50 p-6 rounded-xl shadow-md h-[80vh] overflow-y-auto">
         <h2 className="text-2xl font-bold mb-4">Cover Letter Preview</h2>
-        <div className="bg-white p-4 rounded-lg border space-y-4">
-          {coverLetter ? (
-            <pre className="whitespace-pre-wrap">{coverLetter}</pre>
+        <div className="bg-white p-4 rounded-lg border space-y-4 min-h-[300px] flex flex-col justify-center">
+          {loading ? (
+            <div className="flex flex-col items-center justify-center w-full h-full p-10">
+              <Loader2 className="animate-spin h-10 w-10 text-primary mb-2" />
+              <p className="text-gray-500 font-medium">Generating Cover Letter...</p>
+            </div>
+          ) : coverLetter ? (
+            <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">{coverLetter}</pre>
           ) : (
-            <p>No cover letter available yet.</p>
+            <p className="text-center text-gray-400">No cover letter available yet.</p>
           )}
         </div>
         <div className="flex gap-4 mt-4">
           <Button className="w-full text-base">Download as PDF</Button>
-          <Button variant="outline" className="w-full text-base">Copy to Clipboard</Button>
+          <Button
+            variant="outline"
+            className="w-full text-base"
+            onClick={handleCopy}
+            disabled={!coverLetter || loading}
+          >
+            {isCopied ? "Copied!" : "Copy to Clipboard"}
+          </Button>
         </div>
       </div>
     </div>

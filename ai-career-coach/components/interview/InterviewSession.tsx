@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Mic, MicOff, PhoneOff, User, Bot } from 'lucide-react';
 import { toast } from 'sonner';
+import axios from 'axios'
 
 interface InterviewSessionProps {
     jobRole: string;
@@ -20,11 +21,13 @@ export default function InterviewSession({ jobRole, resumeText, onEnd }: Intervi
     const [isSpeaking, setIsSpeaking] = useState<'user' | 'assistant' | null>(null);
     const [volume, setVolume] = useState({ user: 0, assistant: 0 });
     const [duration, setDuration] = useState(0);
+    const [warnings, setWarnings] = useState(0);
 
     // Keep transcript in ref for final submission without closure staleness
     const transcriptRef = useRef<any[]>([]);
     // Use ref to hold Vapi instance for cleanup
     const vapiRef = useRef<Vapi | null>(null);
+    const warningsRef = useRef(0);
 
     useEffect(() => {
         let timer: NodeJS.Timeout;
@@ -54,9 +57,11 @@ export default function InterviewSession({ jobRole, resumeText, onEnd }: Intervi
 
             vapiInstance.on('call-end', () => {
                 setIsSessionActive(false);
+
+                // Proceed to generate feedback even if warnings limit reached
+                // so user knows why they failed.
+
                 if (transcriptRef.current.length === 0) {
-                    // If transcript is empty, it might be an immediate error or user cancelled instantly
-                    // toast.error("Interview ended but no conversation was recorded.");
                     return;
                 }
                 onEnd(transcriptRef.current);
@@ -80,7 +85,7 @@ export default function InterviewSession({ jobRole, resumeText, onEnd }: Intervi
                 });
             });
 
-            vapiInstance.on('message', (message: any) => {
+            vapiInstance.on('message', async (message: any) => {
                 if (message.type === 'transcript' && message.transcriptType === 'final') {
                     const entry = {
                         role: message.role,
@@ -92,6 +97,37 @@ export default function InterviewSession({ jobRole, resumeText, onEnd }: Intervi
                     if (message.role === 'assistant') {
                         setIsSpeaking('assistant');
                         setTimeout(() => setIsSpeaking(null), 2000);
+                    }
+
+                    if (message.role === 'user') {
+                        try {
+                            const { data } = await axios.post('/api/mock-interview/validate-message', {
+                                message: message.transcript
+                            });
+
+                            if (!data.isValid) {
+                                const newCount = warningsRef.current + 1;
+                                warningsRef.current = newCount;
+                                setWarnings(newCount);
+
+                                toast.warning(`Warning ${newCount}/3: ${data.reason}`);
+
+                                if (newCount >= 3) {
+                                    toast.error("Interview terminated due to multiple security violations.");
+
+                                    // Inject system message for feedback context
+                                    const terminationMsg = {
+                                        role: 'system',
+                                        content: 'INTERVIEW TERMINATED: User exceeded security warnings limit due to off-topic/malicious behavior.'
+                                    };
+                                    transcriptRef.current.push(terminationMsg);
+
+                                    vapiInstance.stop();
+                                }
+                            }
+                        } catch (err) {
+                            console.error("Validation check error", err);
+                        }
                     }
                 }
             });
@@ -119,6 +155,12 @@ export default function InterviewSession({ jobRole, resumeText, onEnd }: Intervi
         
         Keep your responses concise and professional.
         IMPORTANT: Wait for the candidate to complete their answer before asking the next question.
+
+        STRICT BEHAVIOR RULES:
+        1. Stand Firm: Do NOT indulge in off-topic conversations, jokes, or irrelevant distractions.
+        2. Redirect: If the candidate tries to distract you (e.g., asking for a joke, weather, or changing the subject), politely but firmly decline and pivot back to the interview question.
+            - Example: "I'd prefer to stay focused on your interview. Let's get back to [topic]."
+        3. Professionalism: Maintain a formal and focused screening persona at all times.
       `;
 
             console.log("Starting Vapi session...");
@@ -155,6 +197,7 @@ export default function InterviewSession({ jobRole, resumeText, onEnd }: Intervi
     };
 
     const endInterview = () => {
+        console.log("clicked on end interview")
         if (vapiRef.current) {
             vapiRef.current.stop();
         }
@@ -173,9 +216,16 @@ export default function InterviewSession({ jobRole, resumeText, onEnd }: Intervi
                     <h2 className="text-xl font-bold">Mock Interview: {jobRole}</h2>
                     <p className="text-gray-500 text-sm">Duration: {formatTime(duration)}</p>
                 </div>
-                <Button variant="destructive" onClick={endInterview}>
-                    <PhoneOff className="mr-2 h-4 w-4" /> End Interview
-                </Button>
+                <div className="flex items-center gap-4">
+                    {warnings > 0 && (
+                        <div className="bg-yellow-50 text-yellow-700 px-3 py-1 rounded-md text-sm font-medium border border-yellow-200">
+                            Warnings: {warnings}/3
+                        </div>
+                    )}
+                    <Button variant="destructive" onClick={endInterview}>
+                        <PhoneOff className="mr-2 h-4 w-4" /> End Interview
+                    </Button>
+                </div>
             </div>
 
             <div className="flex-1 grid grid-cols-2 gap-4">

@@ -16,6 +16,7 @@ export async function POST(req: NextRequest) {
   const recordId = formData.get("recordId");
   const analysisType = formData.get("analysisType");
   const jobRole = formData.get("jobRole");
+  const jobDescription = formData.get("jobDescription") || "";
 
   const user = await currentUser();
   if (!user?.primaryEmailAddress?.emailAddress) {
@@ -33,6 +34,30 @@ export async function POST(req: NextRequest) {
 
   const arrayBuffer = await resumeFile.arrayBuffer();
   const base64 = Buffer.from(arrayBuffer).toString('base64');
+
+  // Fetch RAG context if job role is provided
+  let ragContext = '';
+  if (jobRole) {
+    try {
+      const ragQuery = jobDescription
+        ? `${jobRole}: ${jobDescription.slice(0, 500)}`
+        : jobRole.toString();
+
+      const ragResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/mock-interview/get-context`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: ragQuery })
+      });
+
+      const ragData = await ragResponse.json();
+      if (ragData.documents && ragData.documents.length > 0) {
+        ragContext = ragData.documents.map((doc: any) => doc.content).join('\n\n');
+      }
+    } catch (err) {
+      console.error("RAG fetch error:", err);
+    }
+  }
+
   const resultId = await inngest.send({
     name: 'AiResumeAgent',
     data: {
@@ -43,7 +68,9 @@ export async function POST(req: NextRequest) {
       userEmail: email,
       userId: userId,
       analysisType: analysisType,
-      jobRole: jobRole
+      jobRole: jobRole,
+      jobDescription: jobDescription,
+      ragContext: ragContext
     }
   });
   const runId = resultId?.ids[0];

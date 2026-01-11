@@ -223,7 +223,7 @@ export const AiResumeAgent = inngest.createFunction(
   { id: 'AiResumeAgent' },
   { event: 'AiResumeAgent' },
   async ({ event, step }) => {
-    const { recordId, base64ResumeFile, pdfText, userEmail, userId, analysisType, jobRole } = await event.data;
+    const { recordId, base64ResumeFile, pdfText, userEmail, userId, analysisType, jobRole, jobDescription, ragContext } = await event.data;
 
     //upload file to cloud storage( imagekit.io )
     const uploadImageUrl = await step.run("uploadImage", async () => {
@@ -242,6 +242,16 @@ export const AiResumeAgent = inngest.createFunction(
         Focus your evaluation, feedback, strengths, and weaknesses specifically on skills and experience relevant to a ${jobRole}.
         If the candidate lacks skills for ${jobRole}, highlight that in "needs_improvement".
         The JSON structure must remain EXACTLY the same as the schema provided.`;
+
+      // Add Job Description to prompt if provided
+      if (jobDescription) {
+        prompt += `\n\nJob Description for ${jobRole}:\n${jobDescription}\n\nAnalyze how well the resume aligns with this specific job posting. Mention missing keywords or qualifications from the JD in your feedback.`;
+      }
+
+      // Add RAG Context if available
+      if (ragContext) {
+        prompt += `\n\n=== EXPERT ATS OPTIMIZATION TIPS ===\n${ragContext}\n\nUse the above best practices to provide tailored, actionable feedback. Reference specific tips when relevant.`;
+      }
     } else {
       prompt += `\n\nPerform a general comprehensive analysis of the resume.`;
     }

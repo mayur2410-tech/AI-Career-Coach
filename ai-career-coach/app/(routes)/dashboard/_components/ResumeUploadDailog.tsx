@@ -26,6 +26,7 @@ const ResumeUploadDailog = ({ openResumeUpload, setOpenResumeDailog }: any) => {
   const [loading, setLoading] = useState(false)
   const [analysisType, setAnalysisType] = useState('overall'); // 'overall' or 'specific'
   const [jobRole, setJobRole] = useState('');
+  const [jobDescription, setJobDescription] = useState('');
   const router = useRouter();
 
   const onFileChange = (e: any) => {
@@ -45,6 +46,7 @@ const ResumeUploadDailog = ({ openResumeUpload, setOpenResumeDailog }: any) => {
     formData.append('analysisType', analysisType);
     if (analysisType === 'specific') {
       formData.append('jobRole', jobRole);
+      formData.append('jobDescription', jobDescription);
     }
 
     try {
@@ -66,6 +68,7 @@ const ResumeUploadDailog = ({ openResumeUpload, setOpenResumeDailog }: any) => {
     setFile(null)
     setAnalysisType('overall')
     setJobRole('')
+    setJobDescription('')
     // setOpenResumeDailog(false)
   }
 
@@ -115,15 +118,26 @@ const ResumeUploadDailog = ({ openResumeUpload, setOpenResumeDailog }: any) => {
                 </div>
 
                 {analysisType === 'specific' && (
-                  <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-                    <label className="text-sm text-gray-600 mb-1 block">Target Job Role:</label>
-                    <input
-                      type="text"
-                      value={jobRole}
-                      onChange={(e) => setJobRole(e.target.value)}
-                      placeholder="e.g. Frontend Developer"
-                      className="w-full border rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    />
+                  <div className="animate-in fade-in slide-in-from-top-2 duration-300 space-y-3">
+                    <div>
+                      <label className="text-sm text-gray-600 mb-1 block">Target Job Role:</label>
+                      <input
+                        type="text"
+                        value={jobRole}
+                        onChange={(e) => setJobRole(e.target.value)}
+                        placeholder="e.g. Frontend Developer"
+                        className="w-full border rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm text-gray-600 mb-1 block">Job Description (Optional):</label>
+                      <textarea
+                        value={jobDescription}
+                        onChange={(e) => setJobDescription(e.target.value)}
+                        placeholder="Paste the full job description here for tailored ATS analysis..."
+                        className="w-full border rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none h-24 resize-y"
+                      />
+                    </div>
                   </div>
                 )}
               </div>
